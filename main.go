@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"context"
+	"embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,8 +11,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
+
+//go:embed docs
+var docs embed.FS
 
 type Config struct {
 	OutputDir      string
@@ -20,6 +25,8 @@ type Config struct {
 	BundleTemplate string
 	BuildArgs      []string
 	Clean          bool
+	Dry            bool
+	ShowTargets    bool
 
 	Aliases         StringSlice
 	DistributionSet DistributionSet
@@ -73,10 +80,11 @@ func bundleFile(loc string, dist Distribution, config Config) (err error) {
 func getAliases(availableDistributions DistributionSet) (aliases map[string]DistributionSet) {
 	aliases = map[string]DistributionSet{
 		"all":     availableDistributions,
-		"mobile":  availableDistributions.Only("android"),
+		"mobile":  availableDistributions.Only("android", "ios"),
 		"web":     availableDistributions.Only("js"),
+		"apple":   availableDistributions.Only("darwin", "ios"),
 		"desktop": availableDistributions.Only("windows", "darwin", "linux"),
-		"unix":    availableDistributions.Only("linux", "darwin", "aix", "dragonfly", "freebsd", "hurd", "illumos", "netbsd", "openbsd", "plan9", "solaris", "zos"),
+		"unix":    availableDistributions.Only("linux", "aix", "dragonfly", "freebsd", "illumos", "netbsd", "openbsd", "plan9", "solaris"),
 	}
 
 	for _, d := range availableDistributions {
@@ -111,8 +119,16 @@ func getBuildTargets(config Config) (res DistributionSet, err error) {
 	}
 
 	for _, alias := range config.Aliases {
+		isDiff := strings.HasPrefix(alias, "-")
+		if isDiff {
+			alias = alias[1:]
+		}
 		if vals, ok := aliases[alias]; ok {
-			res = res.Union(vals)
+			if isDiff {
+				res = res.Difference(vals)
+			} else {
+				res = res.Union(vals)
+			}
 		} else {
 			err = fmt.Errorf("unknown alias: %s", alias)
 			return
@@ -134,21 +150,25 @@ func getName(config Config) (name string, err error) {
 	return mod.Name, err
 }
 
-func runBuild(config Config) (err error) {
+func runBuild(set *flag.FlagSet, config Config) (err error) {
+	config.Aliases = set.Args()
+	config.DistributionSet, err = getBuildTargets(config)
+	if err != nil {
+		return
+	}
+	if config.Dry {
+		fmt.Println("** dry run **")
+	}
+	fmt.Printf("preparing to build %d packages\n", len(config.DistributionSet))
 
 	config.OutputDir = filepath.Clean(config.OutputDir)
-	if config.Clean {
+	if !config.Dry && config.Clean {
 		if err = cleanDirGlob(config.OutputDir, "*.zip"); err != nil {
 			return
 		}
 	}
 
 	if config.Name, err = getName(config); err != nil {
-		return
-	}
-
-	config.DistributionSet, err = getBuildTargets(config)
-	if err != nil {
 		return
 	}
 
@@ -163,6 +183,9 @@ func runBuild(config Config) (err error) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		fmt.Printf("building %s\\%s\n", dist.GOOS, dist.GOARCH)
+		if config.Dry {
+			continue
+		}
 		if err = cmd.Run(); err != nil {
 			fmt.Println(err)
 			// return err
@@ -179,22 +202,99 @@ func runBuild(config Config) (err error) {
 	return nil
 }
 
-func main() {
+func runAliases(set *flag.FlagSet, config Config) (err error) {
+	distributions, err := getAllDistributions()
+	if err != nil {
+		return
+	}
+	aliases := getAliases(distributions)
+	keys := flag.Args()
+	if len(keys) == 0 {
+		for key := range aliases {
+			keys = append(keys, key)
+		}
+	}
+
+	if config.ShowTargets {
+		for _, key := range keys {
+			fmt.Printf("%s:\n", key)
+			for _, val := range aliases[key] {
+				fmt.Printf("\t%s\n", val.String())
+			}
+		}
+	} else {
+		for _, key := range keys {
+			fmt.Println(key)
+		}
+	}
+
+	return
+}
+
+func setFlagUsage(flagSet *flag.FlagSet) {
+	flagSet.Usage = func() {
+		out := flagSet.Output()
+		d, err := docs.ReadFile("docs/" + flagSet.Name() + ".md")
+		if err != nil {
+			fmt.Fprintln(out, err)
+		}
+		out.Write(d)
+		flagSet.PrintDefaults()
+	}
+}
+
+type Cmd struct {
+	FlagSet *flag.FlagSet
+	Exec    func(*flag.FlagSet, Config) error
+}
+
+func run() (err error) {
 	config := Config{}
-	flag.StringVar(&config.OutputDir, "o", "release", "output directory")
-	flag.StringVar(&config.Name, "name", "", "executable name")
-	flag.StringVar(&config.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
-	flag.StringVar(&config.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
-	flag.Var(&config.DistributionSet, "d", "which distributions to use")
-	flag.BoolVar(&config.Clean, "clean", false, "clean the output directory before building")
+
+	flagBuild := flag.NewFlagSet("build", flag.ExitOnError)
+	flagBuild.StringVar(&config.OutputDir, "o", "release", "output directory")
+	flagBuild.StringVar(&config.Name, "name", "", "executable name")
+	flagBuild.StringVar(&config.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
+	flagBuild.StringVar(&config.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
+	flagBuild.BoolVar(&config.Clean, "clean", false, "clean the output directory before building")
+	flagBuild.BoolVar(&config.Dry, "dry", false, "run without actually building anything")
+
+	flagAliases := flag.NewFlagSet("aliases", flag.ExitOnError)
+	flagAliases.BoolVar(&config.ShowTargets, "targets", false, "include a list of targets for each alias")
+
+	cmds := []Cmd{
+		{flagBuild, runBuild},
+		{flagAliases, runAliases},
+	}
 
 	// Allow passing additional args separated by "--"
 	os.Args, config.BuildArgs, _ = StringSliceCut(os.Args, "--")
 	flag.Parse()
+	flag.CommandLine.SetOutput(os.Stdin)
 
-	config.Aliases = flag.Args()
+	for _, cmd := range cmds {
+		if flag.Arg(0) == cmd.FlagSet.Name() {
+			if err = cmd.FlagSet.Parse(flag.Args()[1:]); err != nil {
+				return
+			}
+			return cmd.Exec(cmd.FlagSet, config)
+		}
+	}
 
-	if err := runBuild(config); err != nil {
+	fmt.Println("must supply a valid command")
+	for _, cmd := range cmds {
+		fmt.Fprintln(cmd.FlagSet.Output())
+		d, err := docs.ReadFile("docs/" + cmd.FlagSet.Name() + ".md")
+		if err == nil {
+			cmd.FlagSet.Output().Write(d)
+		}
+		cmd.FlagSet.PrintDefaults()
+	}
+	return
+}
+
+func main() {
+	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 }

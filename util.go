@@ -185,7 +185,11 @@ func cleanDirGlob(dir, pattern string) error {
 		return err
 	}
 	if len(names) != 0 {
-		fmt.Printf("cleaning %d files from %s\n", len(names), dir)
+		absPath, err := filepath.Abs(dir)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("cleaning %d files from %s\n", len(names), absPath)
 	}
 	for _, p := range names {
 		if err = os.Remove(p); err != nil {

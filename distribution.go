@@ -48,6 +48,10 @@ type Distribution struct {
 	CgoSupported bool
 }
 
+func (d Distribution) String() string {
+	return d.GOOS + "/" + d.GOARCH
+}
+
 type DistributionSet []Distribution
 
 func (d *DistributionSet) Set(val string) error {
@@ -64,7 +68,7 @@ func (d DistributionSet) String() (res string) {
 		if i != 0 {
 			res += ", "
 		}
-		res += v.GOOS + "/" + v.GOARCH
+		res += v.String()
 	}
 	return
 }
