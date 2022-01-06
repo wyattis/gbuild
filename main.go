@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -14,8 +13,6 @@ import (
 	"text/template"
 )
 
-var systems, archs StringSlice
-
 type Config struct {
 	OutputDir      string
 	Name           string
@@ -24,74 +21,11 @@ type Config struct {
 	BuildArgs      []string
 	Clean          bool
 
-	Aliases StringSlice
-	Include StringSlice
-	Exclude StringSlice
+	Aliases         StringSlice
+	DistributionSet DistributionSet
 }
 
-var allArchs = []string{
-	"386",
-	"amd64",
-	// "amd64p32",
-	"arm",
-	// "armbe",
-	"arm64",
-	// "arm64be",
-	"ppc64",
-	"ppc64le",
-	"mips",
-	"mipsle",
-	"mips64",
-	"mips64le",
-	// "mips64p32",
-	// "mips64p32le",
-	// "ppc",
-	// "riscv",
-	"riscv64",
-	// "s390",
-	"s390x",
-	// "sparc",
-}
-
-var uncommonArchs = []string{}
-
-var ioArchs = []string{}
-
-var pairDefinitions = SMap{
-	"windows":   {"386", "amd64", "arm", "arm64"},
-	"linux":     allArchs,
-	"darwin":    {"amd64", "arm64"},
-	"android":   allArchs,
-	"js":        {"wasm"},
-	"aix":       allArchs,
-	"dragonfly": allArchs,
-	"freebsd":   allArchs,
-	"hurd":      allArchs,
-	"illumos":   allArchs,
-	"netbsd":    allArchs,
-	"openbsd":   allArchs,
-	"plan9":     allArchs,
-	"solaris":   allArchs,
-	"zos":       allArchs,
-}
-
-var aliases = map[string]SMap{
-	"all":    pairDefinitions.Copy(),
-	"common": pairDefinitions.OnlyKeys("windows", "linux", "darwin"),
-	"mobile": pairDefinitions.OnlyKeys("android"),
-	"web":    pairDefinitions.OnlyKeys("js"),
-	"unix":   pairDefinitions.OnlyKeys("linux", "darwin", "aix", "dragonfly", "freebsd", "hurd", "illumos", "netbsd", "openbsd", "plan9", "solaris", "zos"),
-}
-
-func renderString(tmpl *template.Template, data interface{}) (string, error) {
-	buf := bytes.NewBufferString("")
-	if err := tmpl.Execute(buf, data); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
-func move(loc string, sys string, arch string, config Config) (err error) {
+func bundleFile(loc string, dist Distribution, config Config) (err error) {
 	nameTmpl, err := template.New("name").Parse(config.NameTemplate)
 	if err != nil {
 		return err
@@ -101,10 +35,10 @@ func move(loc string, sys string, arch string, config Config) (err error) {
 		return err
 	}
 	ext, cext := "", ".zip"
-	if sys == "windows" {
+	if dist.GOOS == "windows" {
 		ext = ".exe"
 	}
-	data := map[string]string{"NAME": config.Name, "GOOS": sys, "GOARCH": arch, "EXT": ext, "ZIP": cext}
+	data := map[string]string{"NAME": config.Name, "GOOS": dist.GOOS, "GOARCH": dist.GOARCH, "EXT": ext, "ZIP": cext}
 	name, err := renderString(nameTmpl, data)
 	if err != nil {
 		return err
@@ -135,28 +69,47 @@ func move(loc string, sys string, arch string, config Config) (err error) {
 	return
 }
 
-func clean(dir string) error {
-	names, err := filepath.Glob(dir + "/*.zip")
-	if err != nil {
-		return err
+// Compute aliases based on the available distributions
+func getAliases(availableDistributions DistributionSet) (aliases map[string]DistributionSet) {
+	aliases = map[string]DistributionSet{
+		"all":     availableDistributions,
+		"mobile":  availableDistributions.Only("android"),
+		"web":     availableDistributions.Only("js"),
+		"desktop": availableDistributions.Only("windows", "darwin", "linux"),
+		"unix":    availableDistributions.Only("linux", "darwin", "aix", "dragonfly", "freebsd", "hurd", "illumos", "netbsd", "openbsd", "plan9", "solaris", "zos"),
 	}
-	if len(names) != 0 {
-		fmt.Printf("cleaning %d files from %s", len(names), dir)
-	}
-	for _, p := range names {
-		fmt.Println("removing", p)
-		if err = os.Remove(p); err != nil {
-			return err
+
+	for _, d := range availableDistributions {
+		// Aliases for all operating systems
+		aliases[d.GOOS] = availableDistributions.Only(d.GOOS)
+		// Aliases for all architectures
+		aliases[d.GOARCH] = availableDistributions.OnlyArch(d.GOARCH)
+		// Aliases for all first-class support
+		if d.FirstClass {
+			aliases["first-class"] = append(aliases["first-class"], d)
+		} else {
+			aliases["second-class"] = append(aliases["second-class"], d)
+		}
+		// Aliases for cgo supported
+		if d.CgoSupported {
+			aliases["cgo"] = append(aliases["cgo"], d)
 		}
 	}
-	return nil
+
+	return
 }
 
-func getBuildTargets(config Config) (res SMap, err error) {
-	if len(config.Aliases) == 0 {
-		config.Aliases = append(config.Aliases, "common")
+func getBuildTargets(config Config) (res DistributionSet, err error) {
+	availableDistributions, err := getAllDistributions()
+	if err != nil {
+		return
 	}
-	res = make(SMap, len(config.Aliases))
+
+	aliases := getAliases(availableDistributions)
+	if len(config.Aliases) == 0 {
+		config.Aliases = append(config.Aliases, "first-class")
+	}
+
 	for _, alias := range config.Aliases {
 		if vals, ok := aliases[alias]; ok {
 			res = res.Union(vals)
@@ -181,11 +134,11 @@ func getName(config Config) (name string, err error) {
 	return mod.Name, err
 }
 
-func build(config Config) (err error) {
+func runBuild(config Config) (err error) {
 
 	config.OutputDir = filepath.Clean(config.OutputDir)
 	if config.Clean {
-		if err = clean(config.OutputDir); err != nil {
+		if err = cleanDirGlob(config.OutputDir, "*.zip"); err != nil {
 			return
 		}
 	}
@@ -194,34 +147,32 @@ func build(config Config) (err error) {
 		return
 	}
 
-	buildTargets, err := getBuildTargets(config)
+	config.DistributionSet, err = getBuildTargets(config)
 	if err != nil {
 		return
 	}
 
 	args := []string{"build"}
-	for sys, archs := range buildTargets {
-		for _, arch := range archs {
-			outPath := filepath.Join(config.OutputDir, config.Name)
-			cmdArgs := append(args, "-o", outPath)
-			cmdArgs = append(cmdArgs, config.BuildArgs...)
-			cmd := exec.CommandContext(context.Background(), "go", cmdArgs...)
-			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, []string{fmt.Sprintf("GOOS=%s", sys), fmt.Sprintf("GOARCH=%s", arch)}...)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			fmt.Printf("building %s\\%s\n", sys, arch)
-			if err = cmd.Run(); err != nil {
-				fmt.Println(err)
-				// return err
+	for _, dist := range config.DistributionSet {
+		outPath := filepath.Join(config.OutputDir, config.Name)
+		cmdArgs := append(args, "-o", outPath)
+		cmdArgs = append(cmdArgs, config.BuildArgs...)
+		cmd := exec.CommandContext(context.Background(), "go", cmdArgs...)
+		cmd.Env = os.Environ()
+		cmd.Env = append(cmd.Env, []string{fmt.Sprintf("GOOS=%s", dist.GOOS), fmt.Sprintf("GOARCH=%s", dist.GOARCH)}...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		fmt.Printf("building %s\\%s\n", dist.GOOS, dist.GOARCH)
+		if err = cmd.Run(); err != nil {
+			fmt.Println(err)
+			// return err
+		}
+		if err == nil {
+			if err = bundleFile(outPath, dist, config); err != nil {
+				return
 			}
-			if err == nil {
-				if err = move(outPath, sys, arch, config); err != nil {
-					return
-				}
-				if err = os.Remove(outPath); err != nil {
-					return
-				}
+			if err = os.Remove(outPath); err != nil {
+				return
 			}
 		}
 	}
@@ -230,20 +181,20 @@ func build(config Config) (err error) {
 
 func main() {
 	config := Config{}
-	flag.StringVar(&config.OutputDir, "o", "", "output directory")
+	flag.StringVar(&config.OutputDir, "o", "release", "output directory")
 	flag.StringVar(&config.Name, "name", "", "executable name")
 	flag.StringVar(&config.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
 	flag.StringVar(&config.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
+	flag.Var(&config.DistributionSet, "d", "which distributions to use")
 	flag.BoolVar(&config.Clean, "clean", false, "clean the output directory before building")
-	flag.Var(&config.Aliases, "a", "the primary set of combinations to include in the release (default: common)")
-	flag.Var(&config.Exclude, "e", "values to exclude. can be either os or archs")
-	flag.Var(&config.Include, "i", "values to include apart from those defined in aliases")
 
 	// Allow passing additional args separated by "--"
 	os.Args, config.BuildArgs, _ = StringSliceCut(os.Args, "--")
 	flag.Parse()
 
-	if err := build(config); err != nil {
+	config.Aliases = flag.Args()
+
+	if err := runBuild(config); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 }

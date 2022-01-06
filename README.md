@@ -21,7 +21,8 @@ gbuild -- --ldflags '-extldflags "-Wl,--allow-multiple-definition"'
 ```
 
 ## TODO
-- [ ] parse package name from module file
+- [x] parse package name from module file
 - [x] bundle as zip
 - [ ] custom aliases
 - [ ] custom filters
+- [ ] use output from `go tool dist list -json` for targets

@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 type StringSlice []string
@@ -81,6 +86,30 @@ func StringCut(val string, sep string) (left, right string, found bool) {
 	return val, "", false
 }
 
+func StringCutAny(val string, seperators ...string) (left, right string, found bool) {
+	for _, sep := range seperators {
+		left, right, found = StringCut(val, sep)
+		if found {
+			return
+		}
+	}
+	return
+}
+
+func StringSplitMany(val string, seperators ...string) (parts []string) {
+	parts = append(parts, val)
+	for _, sep := range seperators {
+		for i, part := range parts {
+			vals := strings.Split(part, sep)
+			if len(vals) > 1 {
+				// Replace existing element with all vals
+				parts = append(parts[:i], append(vals, parts[i+1:]...)...)
+			}
+		}
+	}
+	return
+}
+
 func StringSliceRemove(haystack []string, needle string) (res []string) {
 	for i := range haystack {
 		if haystack[i] != needle {
@@ -140,4 +169,28 @@ func StringSliceContains(s []string, key string) bool {
 		}
 	}
 	return false
+}
+
+func renderString(tmpl *template.Template, data interface{}) (string, error) {
+	buf := bytes.NewBufferString("")
+	if err := tmpl.Execute(buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func cleanDirGlob(dir, pattern string) error {
+	names, err := filepath.Glob(filepath.Join(dir, pattern))
+	if err != nil {
+		return err
+	}
+	if len(names) != 0 {
+		fmt.Printf("cleaning %d files from %s\n", len(names), dir)
+	}
+	for _, p := range names {
+		if err = os.Remove(p); err != nil {
+			return err
+		}
+	}
+	return nil
 }
