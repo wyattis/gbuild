@@ -1,0 +1,26 @@
+{{ define "actions" -}}
+name: Build {{.Name}} binaries
+
+# This section controls which events will trigger the action 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+    - 'v*' # Runs when version tags like this v1.0, v20.15.10 are pushed
+  
+  # Allows running this workflow manually from the Actions tab
+  {{if .WorkflowDispatch}}
+  workflow_dispatch:
+  {{else}}
+  # workflow_dispatch:
+  {{end}}
+
+jobs:
+  build:
+    steps:
+      {{- include "build-steps" . | indent 6}}
+      {{if .CreateRelease -}}
+      {{- include "release-steps" . | indent 6}}
+      {{- end -}}
+{{- end }}

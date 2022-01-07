@@ -1,0 +1,27 @@
+{{- define "release-steps" -}}
+- name: Create release
+  id: create_release
+  uses: actions/create-release@v1
+  env:
+    GITHUB_TOKEN: {{"${{ secrets.GITHUB_TOKEN }}"}}
+  with: 
+    tag_name: {{"${{ github.ref }}"}}
+    release_name: {{"${{ env.RELEASE_TITLE }}"}}
+
+{{range .DistributionSet}}
+- name: Upload {{.GOOS}}/{{.GOARCH}}
+  uses: actions/upload-release-asset@v1
+  env:
+    GITHUB_TOKEN: {{"${{ secrets.GITHUB_TOKEN }}"}}
+  with:
+    # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+    # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+    upload_url: {{"${{ steps.create_release.outputs.upload_url }}"}}
+    # Location of the binary
+    asset_path: {{.BuildPath}}
+    # Final asset name
+    asset_name: {{filename .BuildPath}}
+    # MIME type for the upload
+    asset_content_type: application/zip
+{{ end }}
+{{- end -}}

@@ -1,0 +1,1 @@
+gbuild is a tool for quickly creating building for multiple platforms.

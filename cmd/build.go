@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
 	"gbuild/lib"
@@ -13,6 +14,10 @@ import (
 
 var buildDescription string
 var buildConfig lib.BuildConfig
+
+var (
+	ErrBuildName = errors.New("must define the executable name or have a go.mod file present")
+)
 
 var buildCommand = lib.Cmd{
 	Name:             "build",
@@ -28,30 +33,35 @@ var buildCommand = lib.Cmd{
 		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually building anything")
 		return nil
 	},
+	Parse: func(set *flag.FlagSet, args []string) (err error) {
+		if err = set.Parse(args[1:]); err != nil {
+			return
+		}
+		buildConfig.OutputDir = filepath.Clean(buildConfig.OutputDir)
+		if _, err = lib.ApplyModule(&buildConfig); err != nil {
+			return
+		}
+		if buildConfig.Name == "" {
+			return ErrBuildName
+		}
+		buildConfig.Aliases = set.Args()
+		buildConfig.DistributionSet, err = lib.GetBuildTargets(buildConfig)
+		return
+	},
 	Exec: runBuild,
 }
 
 func runBuild(set *flag.FlagSet) (err error) {
 	config := buildConfig
-	config.Aliases = set.Args()
-	config.DistributionSet, err = lib.GetBuildTargets(config)
-	if err != nil {
-		return
-	}
 	if config.Dry {
 		fmt.Println("** dry run **")
 	}
 	fmt.Printf("preparing to build %d packages\n", len(config.DistributionSet))
 
-	config.OutputDir = filepath.Clean(config.OutputDir)
 	if !config.Dry && config.Clean {
 		if err = lib.CleanDirGlob(config.OutputDir, "*.zip"); err != nil {
 			return
 		}
-	}
-
-	if config.Name, err = lib.GetModName(config); err != nil {
-		return
 	}
 
 	args := []string{"build"}

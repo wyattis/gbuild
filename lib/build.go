@@ -2,11 +2,13 @@ package lib
 
 import (
 	"archive/zip"
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 )
@@ -14,6 +16,7 @@ import (
 type BuildConfig struct {
 	OutputDir      string
 	Name           string
+	GoVersion      string
 	NameTemplate   string
 	BundleTemplate string
 	BuildArgs      []string
@@ -127,18 +130,97 @@ func GetBuildTargets(config BuildConfig) (res DistributionSet, err error) {
 			return
 		}
 	}
+
+	return enhanceDistributions(res, config)
+
+}
+
+func enhanceDistributions(d DistributionSet, config BuildConfig) (res DistributionSet, err error) {
+	res = d
+	// nameTmpl, err := template.New("name").Parse(config.NameTemplate)
+	// if err != nil {
+	// 	return
+	// }
+	bundleTmpl, err := template.New("bundle").Parse(config.BundleTemplate)
+	if err != nil {
+		return
+	}
+
+	for i := range res {
+		ext, cext := "", ".zip"
+		if res[i].GOOS == "windows" {
+			ext = ".exe"
+		}
+		data := map[string]string{"NAME": config.Name, "GOOS": res[i].GOOS, "GOARCH": res[i].GOARCH, "EXT": ext, "ZIP": cext}
+		// binName, err := RenderString(nameTmpl, data)
+		// if err != nil {
+		// 	return
+		// }
+		bundleName, err := RenderString(bundleTmpl, data)
+		if err != nil {
+			return res, err
+		}
+
+		finalPath := filepath.Join(config.OutputDir, bundleName)
+		res[i].BuildPath = finalPath
+	}
 	return
 }
 
-func GetModName(config BuildConfig) (name string, err error) {
-	if config.Name != "" {
-		return config.Name, nil
+type GoModule struct {
+	Name      string
+	GoVersion string
+}
+
+// Parse package name and go version from a go.mod file
+func ParseMod(loc string) (mod GoModule, err error) {
+	f, err := os.Open(loc)
+	if err != nil {
+		return
 	}
-	mod, err := parseMod("go.mod")
-	if errors.Is(err, os.ErrNotExist) {
-		return "", errors.New("must define the executable name or have a go.mod file present")
-	} else if err != nil {
-		return "", err
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if err = scanner.Err(); err != nil {
+			return
+		}
+		line := scanner.Text()
+		if mod.Name == "" && strings.HasPrefix(line, "module") {
+			_, name, found := StringCut(line, " ")
+			if !found {
+				err = fmt.Errorf("invalid module name in %s", loc)
+				return
+			}
+			mod.Name = name
+		}
+		if mod.GoVersion == "" && strings.HasPrefix(line, "go") {
+			_, version, found := StringCut(line, " ")
+			if !found {
+				err = fmt.Errorf("invalid go version in %s", loc)
+				return
+			}
+			mod.GoVersion = version
+		}
+		if mod.GoVersion != "" && mod.Name != "" {
+			return
+		}
 	}
-	return mod.Name, err
+	return
+}
+
+func ApplyModule(config *BuildConfig) (mod GoModule, err error) {
+	config.GoVersion = runtime.Version()
+	mod, err = ParseMod("go.mod")
+	if err != nil {
+		// It's not strictly necessary that the "go.mod" file should exist
+		if errors.Is(err, os.ErrNotExist) {
+			err = nil
+		}
+		return
+	}
+	if config.Name == "" {
+		config.Name = mod.Name
+	}
+	config.GoVersion = mod.GoVersion
+	return
 }

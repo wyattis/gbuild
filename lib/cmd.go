@@ -12,6 +12,7 @@ type Cmd struct {
 	Name             string
 	ShortDescription string
 	LongDescription  string
+	Parse            func(set *flag.FlagSet, args []string) error
 	Init             func(*flag.FlagSet) error
 	Exec             func(*flag.FlagSet) error
 }
@@ -53,7 +54,12 @@ func Execute() (err error) {
 	for i, cmd := range commands {
 		if cmd.Name == flag.Arg(0) {
 			flagSet := flagSets[i]
-			if err = flagSet.Parse(flag.Args()[1:]); err != nil {
+			if cmd.Parse == nil {
+				err = flagSet.Parse(flag.Args()[1:])
+			} else {
+				err = cmd.Parse(flagSet, flag.Args())
+			}
+			if err != nil {
 				return
 			}
 			return cmd.Exec(flagSet)
