@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bufio"
@@ -135,7 +135,7 @@ func (d DistributionSet) Difference(other DistributionSet) (res DistributionSet)
 	return
 }
 
-func getAllDistributions() (res DistributionSet, err error) {
+func GetAllDistributions() (res DistributionSet, err error) {
 	buf := bytes.NewBuffer(nil)
 	errBuf := bytes.NewBuffer(nil)
 	cmd := exec.CommandContext(context.Background(), "go", "tool", "dist", "list", "-json")

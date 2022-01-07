@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bytes"
@@ -171,7 +171,7 @@ func StringSliceContains(s []string, key string) bool {
 	return false
 }
 
-func renderString(tmpl *template.Template, data interface{}) (string, error) {
+func RenderString(tmpl *template.Template, data interface{}) (string, error) {
 	buf := bytes.NewBufferString("")
 	if err := tmpl.Execute(buf, data); err != nil {
 		return "", err
@@ -179,7 +179,7 @@ func renderString(tmpl *template.Template, data interface{}) (string, error) {
 	return buf.String(), nil
 }
 
-func cleanDirGlob(dir, pattern string) error {
+func CleanDirGlob(dir, pattern string) error {
 	names, err := filepath.Glob(filepath.Join(dir, pattern))
 	if err != nil {
 		return err
