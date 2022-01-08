@@ -15,13 +15,14 @@ on:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: '1.17' # The Go version to download (if necessary) and use.
       - run: go install github.com/wyattis/gbuild
-      - run: gbuild build -release
+      - run: gbuild build -release all
 
       
       - name: Create release
@@ -33,6 +34,81 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ env.RELEASE_TITLE }}
       
+      
+      - name: Upload aix/ppc64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_aix_ppc64.zip
+          # Final asset name
+          asset_name: gbuild_aix_ppc64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload android/386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_android_386.zip
+          # Final asset name
+          asset_name: gbuild_android_386.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload android/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_android_amd64.zip
+          # Final asset name
+          asset_name: gbuild_android_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload android/arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_android_arm.zip
+          # Final asset name
+          asset_name: gbuild_android_arm.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload android/arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_android_arm64.zip
+          # Final asset name
+          asset_name: gbuild_android_arm64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
       
       - name: Upload darwin/amd64
         uses: actions/upload-release-asset@v1
@@ -61,6 +137,141 @@ jobs:
           asset_path: release\gbuild_darwin_arm64.zip
           # Final asset name
           asset_name: gbuild_darwin_arm64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload dragonfly/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_dragonfly_amd64.zip
+          # Final asset name
+          asset_name: gbuild_dragonfly_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload freebsd/386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_freebsd_386.zip
+          # Final asset name
+          asset_name: gbuild_freebsd_386.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload freebsd/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_freebsd_amd64.zip
+          # Final asset name
+          asset_name: gbuild_freebsd_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload freebsd/arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_freebsd_arm.zip
+          # Final asset name
+          asset_name: gbuild_freebsd_arm.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload freebsd/arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_freebsd_arm64.zip
+          # Final asset name
+          asset_name: gbuild_freebsd_arm64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload illumos/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_illumos_amd64.zip
+          # Final asset name
+          asset_name: gbuild_illumos_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload ios/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_ios_amd64.zip
+          # Final asset name
+          asset_name: gbuild_ios_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload ios/arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_ios_arm64.zip
+          # Final asset name
+          asset_name: gbuild_ios_arm64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload js/wasm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_js_wasm.zip
+          # Final asset name
+          asset_name: gbuild_js_wasm.zip
           # MIME type for the upload
           asset_content_type: application/zip
       
@@ -124,6 +335,321 @@ jobs:
           # MIME type for the upload
           asset_content_type: application/zip
       
+      - name: Upload linux/mips
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_mips.zip
+          # Final asset name
+          asset_name: gbuild_linux_mips.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/mips64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_mips64.zip
+          # Final asset name
+          asset_name: gbuild_linux_mips64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/mips64le
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_mips64le.zip
+          # Final asset name
+          asset_name: gbuild_linux_mips64le.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/mipsle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_mipsle.zip
+          # Final asset name
+          asset_name: gbuild_linux_mipsle.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/ppc64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_ppc64.zip
+          # Final asset name
+          asset_name: gbuild_linux_ppc64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/ppc64le
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_ppc64le.zip
+          # Final asset name
+          asset_name: gbuild_linux_ppc64le.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/riscv64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_riscv64.zip
+          # Final asset name
+          asset_name: gbuild_linux_riscv64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload linux/s390x
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_linux_s390x.zip
+          # Final asset name
+          asset_name: gbuild_linux_s390x.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload netbsd/386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_netbsd_386.zip
+          # Final asset name
+          asset_name: gbuild_netbsd_386.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload netbsd/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_netbsd_amd64.zip
+          # Final asset name
+          asset_name: gbuild_netbsd_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload netbsd/arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_netbsd_arm.zip
+          # Final asset name
+          asset_name: gbuild_netbsd_arm.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload netbsd/arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_netbsd_arm64.zip
+          # Final asset name
+          asset_name: gbuild_netbsd_arm64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload openbsd/386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_openbsd_386.zip
+          # Final asset name
+          asset_name: gbuild_openbsd_386.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload openbsd/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_openbsd_amd64.zip
+          # Final asset name
+          asset_name: gbuild_openbsd_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload openbsd/arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_openbsd_arm.zip
+          # Final asset name
+          asset_name: gbuild_openbsd_arm.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload openbsd/arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_openbsd_arm64.zip
+          # Final asset name
+          asset_name: gbuild_openbsd_arm64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload openbsd/mips64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_openbsd_mips64.zip
+          # Final asset name
+          asset_name: gbuild_openbsd_mips64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload plan9/386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_plan9_386.zip
+          # Final asset name
+          asset_name: gbuild_plan9_386.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload plan9/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_plan9_amd64.zip
+          # Final asset name
+          asset_name: gbuild_plan9_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload plan9/arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_plan9_arm.zip
+          # Final asset name
+          asset_name: gbuild_plan9_arm.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload solaris/amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_solaris_amd64.zip
+          # Final asset name
+          asset_name: gbuild_solaris_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
       - name: Upload windows/386
         uses: actions/upload-release-asset@v1
         env:
@@ -151,6 +677,36 @@ jobs:
           asset_path: release\gbuild_windows_amd64.zip
           # Final asset name
           asset_name: gbuild_windows_amd64.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload windows/arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_windows_arm.zip
+          # Final asset name
+          asset_name: gbuild_windows_arm.zip
+          # MIME type for the upload
+          asset_content_type: application/zip
+      
+      - name: Upload windows/arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+          # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # Location of the binary
+          asset_path: release\gbuild_windows_arm64.zip
+          # Final asset name
+          asset_name: gbuild_windows_arm64.zip
           # MIME type for the upload
           asset_content_type: application/zip
       
