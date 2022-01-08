@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 )
 
+//go:embed manual/build.md
 var buildDescription string
 var buildConfig lib.BuildConfig
 
@@ -30,7 +31,7 @@ var buildCommand = lib.Cmd{
 		set.StringVar(&buildConfig.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
 		set.StringVar(&buildConfig.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
 		set.BoolVar(&buildConfig.Clean, "clean", false, "clean the output directory before building")
-		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually building anything")
+		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually doing anything")
 		return nil
 	},
 	Parse: func(set *flag.FlagSet, args []string) (err error) {

@@ -1,7 +1,11 @@
+//go:build experimental
+// +build experimental
+
 package cmd
 
 import (
 	"bytes"
+	_ "embed"
 	"flag"
 	"fmt"
 	"gbuild/lib"
@@ -10,6 +14,9 @@ import (
 	"strings"
 	"text/template"
 )
+
+//go:embed manual/create.md
+var createDescription string
 
 type ActionsConfig struct {
 	lib.BuildConfig
@@ -22,7 +29,9 @@ type ActionsConfig struct {
 
 var createConfig = ActionsConfig{}
 var createCmd = lib.Cmd{
-	Name: "create",
+	Name:             "create",
+	ShortDescription: "generate workflow and bash scripts using the same settings",
+	LongDescription:  createDescription,
 	Init: func(set *flag.FlagSet) error {
 		set.BoolVar(&createConfig.CreateRelease, "release", false, "automatically create a release via the action")
 		set.BoolVar(&createConfig.WorkflowDispatch, "workflow-dispatch", true, "allow dispatching the workflow manually")
