@@ -101,7 +101,7 @@ func makeFuncMap(t *template.Template) template.FuncMap {
 			return buf.String(), nil
 		},
 		"filename": func(path string) string {
-			return filepath.Base(path)
+			return filepath.Clean(filepath.Base(path))
 		},
 	}
 }

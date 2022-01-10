@@ -20,9 +20,12 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.17' # The Go version to download (if necessary) and use.
-      - run: go clean -cache -modcache -i -r
-      - run: go install github.com/wyattis/gbuild@latest
-      - run: gbuild build -v -clean first-class
+      # - run: go clean -cache -modcache -i -r
+      # - run: go install github.com/wyattis/gbuild@latest
+      # - run: gbuild build -v -clean first-class
+      - run: wget https://github.com/wyattis/gbuild/releases/download/v0.1-pr1/gbuild_linux_amd64.zip
+      - run: unzip gbuild_linux_amd64.zip
+      - run: gbuild build -clean first-class
 
       
       - name: Create release
@@ -48,7 +51,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_darwin_amd64.zip
+          asset_path: release/gbuild_darwin_amd64.zip
           # Final asset name
           asset_name: gbuild_darwin_amd64.zip
           # MIME type for the upload
@@ -64,7 +67,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_darwin_arm64.zip
+          asset_path: release/gbuild_darwin_arm64.zip
           # Final asset name
           asset_name: gbuild_darwin_arm64.zip
           # MIME type for the upload
@@ -80,7 +83,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_linux_386.zip
+          asset_path: release/gbuild_linux_386.zip
           # Final asset name
           asset_name: gbuild_linux_386.zip
           # MIME type for the upload
@@ -96,7 +99,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_linux_amd64.zip
+          asset_path: release/gbuild_linux_amd64.zip
           # Final asset name
           asset_name: gbuild_linux_amd64.zip
           # MIME type for the upload
@@ -112,7 +115,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_linux_arm.zip
+          asset_path: release/gbuild_linux_arm.zip
           # Final asset name
           asset_name: gbuild_linux_arm.zip
           # MIME type for the upload
@@ -128,7 +131,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_linux_arm64.zip
+          asset_path: release/gbuild_linux_arm64.zip
           # Final asset name
           asset_name: gbuild_linux_arm64.zip
           # MIME type for the upload
@@ -144,7 +147,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_windows_386.zip
+          asset_path: release/gbuild_windows_386.zip
           # Final asset name
           asset_name: gbuild_windows_386.zip
           # MIME type for the upload
@@ -160,7 +163,7 @@ jobs:
           # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Location of the binary
-          asset_path: ./release\gbuild_windows_amd64.zip
+          asset_path: release/gbuild_windows_amd64.zip
           # Final asset name
           asset_name: gbuild_windows_amd64.zip
           # MIME type for the upload
