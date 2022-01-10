@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	_ "gbuild/cmd"
-	"gbuild/lib"
 	"os"
+
+	_ "github.com/wyattis/gbuild/cmd"
+	"github.com/wyattis/gbuild/lib"
 )
 
 func main() {

@@ -4,7 +4,8 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
-	"gbuild/lib"
+
+	"github.com/wyattis/gbuild/lib"
 )
 
 //go:embed manual/list.md

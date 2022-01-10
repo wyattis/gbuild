@@ -6,10 +6,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"gbuild/lib"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/wyattis/gbuild/lib"
 )
 
 //go:embed manual/build.md

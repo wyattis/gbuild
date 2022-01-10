@@ -8,7 +8,7 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
-	"gbuild/lib"
+	"github.com/wyattis/gbuild/lib"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,8 +24,8 @@ type ActionsConfig struct {
 	WorkflowDispatch bool
 	BuildBinUrl      string
 	BuildBinName     string
-	PreRelease bool
-	Draft bool
+	PreRelease       bool
+	Draft            bool
 	Args             []string
 }
 
@@ -82,7 +82,7 @@ var createCmd = lib.Cmd{
 func makeFuncMap(t *template.Template) template.FuncMap {
 	return template.FuncMap{
 		"join": strings.Join,
-		"add": func (num int, add int) int {
+		"add": func(num int, add int) int {
 			return num + add
 		},
 		"indent": func(padding int, val string) (res string) {
