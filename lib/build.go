@@ -24,6 +24,7 @@ type BuildConfig struct {
 	Clean          bool
 	Dry            bool
 	ShowTargets    bool
+	Verbose        bool
 
 	Aliases         StringSlice
 	DistributionSet DistributionSet
@@ -53,6 +54,9 @@ func BundleFile(loc string, dist Distribution, config BuildConfig) (err error) {
 	}
 
 	finalPath := filepath.Join(config.OutputDir, bundleName)
+	if config.Verbose {
+		fmt.Println("finalPath", finalPath)
+	}
 	outf, err := os.Create(finalPath)
 	if err != nil {
 		return err
@@ -153,16 +157,12 @@ func enhanceDistributions(d DistributionSet, config BuildConfig) (res Distributi
 			ext = ".exe"
 		}
 		data := map[string]string{"NAME": config.Name, "GOOS": res[i].GOOS, "GOARCH": res[i].GOARCH, "EXT": ext, "ZIP": cext}
-		// binName, err := RenderString(nameTmpl, data)
-		// if err != nil {
-		// 	return
-		// }
 		bundleName, err := RenderString(bundleTmpl, data)
 		if err != nil {
 			return res, err
 		}
 
-		finalPath := filepath.Join(config.OutputDir, bundleName)
+		finalPath := filepath.Clean(filepath.Join(config.OutputDir, bundleName))
 		res[i].BuildPath = finalPath
 	}
 	return

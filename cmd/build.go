@@ -26,6 +26,7 @@ var buildCommand = lib.Cmd{
 	ShortDescription: "Cross compile for multiple platforms using a set of aliases.",
 	LongDescription:  buildDescription,
 	Init: func(set *flag.FlagSet) error {
+		set.BoolVar(&buildConfig.Verbose, "v", false, "verbose output")
 		set.StringVar(&buildConfig.OutputDir, "o", "release", "output directory")
 		set.StringVar(&buildConfig.Name, "name", "", "executable name")
 		set.StringVar(&buildConfig.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
