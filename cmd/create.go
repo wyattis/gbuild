@@ -24,6 +24,8 @@ type ActionsConfig struct {
 	WorkflowDispatch bool
 	BuildBinUrl      string
 	BuildBinName     string
+	PreRelease bool
+	Draft bool
 	Args             []string
 }
 
@@ -35,15 +37,26 @@ var createCmd = lib.Cmd{
 	Init: func(set *flag.FlagSet) error {
 		set.BoolVar(&createConfig.CreateRelease, "release", false, "automatically create a release via the action")
 		set.BoolVar(&createConfig.WorkflowDispatch, "workflow-dispatch", true, "allow dispatching the workflow manually")
+		set.BoolVar(&createConfig.PreRelease, "prerelease", false, "mark the release as a pre-release")
+		set.BoolVar(&createConfig.Draft, "draft", false, "mark the release as a draft")
 		set.StringVar(&createConfig.BuildBinUrl, "build-bin-url", "github.com/wyattis/gbuild", "change the location of the build binary")
 		set.StringVar(&createConfig.BuildBinName, "build-bin-name", "gbuild", "change the name of the binary to execute")
-		return buildCommand.Init(set)
+		return nil
 	},
 	Parse: func(set *flag.FlagSet, args []string) (err error) {
-		createConfig.Args = args[1:]
-		if err = buildCommand.Parse(set, args); err != nil {
+		args, buildArgs, _ := lib.StringSliceCut(args, "--")
+		args = args[1:]
+		if err = set.Parse(args); err != nil {
 			return
 		}
+		buildSet := flag.NewFlagSet("", flag.ExitOnError)
+		if err = buildCommand.Init(buildSet); err != nil {
+			return
+		}
+		if err = buildCommand.Parse(buildSet, buildArgs); err != nil {
+			return
+		}
+		createConfig.Args = buildArgs
 		createConfig.BuildConfig = buildConfig
 		return
 	},
@@ -69,6 +82,9 @@ var createCmd = lib.Cmd{
 func makeFuncMap(t *template.Template) template.FuncMap {
 	return template.FuncMap{
 		"join": strings.Join,
+		"add": func (num int, add int) int {
+			return num + add
+		},
 		"indent": func(padding int, val string) (res string) {
 			res = "\n"
 			lines := strings.Split(val, "\n")

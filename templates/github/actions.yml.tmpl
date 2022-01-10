@@ -10,11 +10,11 @@ on:
     - 'v*' # Runs when version tags like this v1.0, v20.15.10 are pushed
   
   # Allows running this workflow manually from the Actions tab
-  {{if .WorkflowDispatch}}
+  {{if .WorkflowDispatch -}}
   workflow_dispatch:
   {{else}}
   # workflow_dispatch:
-  {{end}}
+  {{- end}}
 
 jobs:
   build:

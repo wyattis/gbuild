@@ -6,10 +6,14 @@
     GITHUB_TOKEN: {{"${{ secrets.GITHUB_TOKEN }}"}}
   with: 
     tag_name: {{"${{ github.ref }}"}}
-    release_name: {{"${{ env.RELEASE_TITLE }}"}}
+    release_name: {{"${{ github.ref }}"}}
+    prerelease: {{ .PreRelease }}
+    draft: {{ .Draft }}
 
-{{range .DistributionSet}}
-- name: Upload {{.GOOS}}/{{.GOARCH}}
+{{ $total := len .DistributionSet }}
+{{range $i, $d := .DistributionSet}}
+# Target {{ add $i 1 }} / {{ $total }}
+- name: Upload {{$d.GOOS}}/{{$d.GOARCH}}
   uses: actions/upload-release-asset@v1
   env:
     GITHUB_TOKEN: {{"${{ secrets.GITHUB_TOKEN }}"}}
@@ -18,9 +22,9 @@
     # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
     upload_url: {{"${{ steps.create_release.outputs.upload_url }}"}}
     # Location of the binary
-    asset_path: {{.BuildPath}}
+    asset_path: {{$d.BuildPath}}
     # Final asset name
-    asset_name: {{filename .BuildPath}}
+    asset_name: {{filename $d.BuildPath}}
     # MIME type for the upload
     asset_content_type: application/zip
 {{ end }}
