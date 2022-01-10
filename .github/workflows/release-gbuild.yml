@@ -25,7 +25,7 @@ jobs:
       # - run: gbuild build -v -clean first-class
       - run: wget https://github.com/wyattis/gbuild/releases/download/v0.1-pr1/gbuild_linux_amd64.zip
       - run: unzip gbuild_linux_amd64.zip
-      - run: gbuild build -clean first-class
+      - run: ./gbuild build -clean -v first-class
 
       
       - name: Create release
