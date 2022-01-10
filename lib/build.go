@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -191,7 +192,7 @@ func ParseMod(loc string) (mod GoModule, err error) {
 				err = fmt.Errorf("invalid module name in %s", loc)
 				return
 			}
-			mod.Name = name
+			mod.Name = path.Base(name)
 		}
 		if mod.GoVersion == "" && strings.HasPrefix(line, "go") {
 			_, version, found := StringCut(line, " ")
