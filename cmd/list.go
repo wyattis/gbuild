@@ -42,9 +42,9 @@ var listCmd = lib.Cmd{
 		if config.ShowTargets {
 			for _, key := range keys {
 				fmt.Printf("%s:\n", key)
-				for _, val := range aliases[key] {
-					fmt.Printf("\t%s\n", val.String())
-				}
+				// for _, val := range aliases[key] {
+				// fmt.Printf("\t%s\n", val.String())
+				// }
 			}
 		} else {
 			for _, key := range keys {

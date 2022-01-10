@@ -78,6 +78,9 @@ func runBuild(set *flag.FlagSet) (err error) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		fmt.Printf("building %s\\%s\n", dist.GOOS, dist.GOARCH)
+		if config.Verbose {
+			fmt.Printf("%+v\n", dist)
+		}
 		if config.Dry {
 			continue
 		}

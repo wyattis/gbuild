@@ -15,9 +15,9 @@ type Distribution struct {
 	BuildPath    string
 }
 
-func (d Distribution) String() string {
-	return d.GOOS + "/" + d.GOARCH
-}
+// func (d Distribution) String() string {
+// 	return d.GOOS + "/" + d.GOARCH
+// }
 
 type DistributionSet []Distribution
 
@@ -35,7 +35,7 @@ func (d DistributionSet) String() (res string) {
 		if i != 0 {
 			res += ", "
 		}
-		res += v.String()
+		res += v.GOOS + "/" + v.GOARCH
 	}
 	return
 }

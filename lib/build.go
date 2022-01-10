@@ -162,7 +162,7 @@ func enhanceDistributions(d DistributionSet, config BuildConfig) (res Distributi
 			return res, err
 		}
 
-		finalPath := filepath.Clean(filepath.Join(config.OutputDir, bundleName))
+		finalPath := filepath.ToSlash(filepath.Join(config.OutputDir, bundleName))
 		res[i].BuildPath = finalPath
 	}
 	return
