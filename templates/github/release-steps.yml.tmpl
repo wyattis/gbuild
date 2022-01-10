@@ -22,7 +22,7 @@
     # More info here: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
     upload_url: {{"${{ steps.create_release.outputs.upload_url }}"}}
     # Location of the binary
-    asset_path: {{$d.BuildPath}}
+    asset_path: ./{{$d.BuildPath}}
     # Final asset name
     asset_name: {{filename $d.BuildPath}}
     # MIME type for the upload
