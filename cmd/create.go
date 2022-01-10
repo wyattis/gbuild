@@ -39,7 +39,7 @@ var createCmd = lib.Cmd{
 		set.BoolVar(&createConfig.WorkflowDispatch, "workflow-dispatch", true, "allow dispatching the workflow manually")
 		set.BoolVar(&createConfig.PreRelease, "prerelease", false, "mark the release as a pre-release")
 		set.BoolVar(&createConfig.Draft, "draft", false, "mark the release as a draft")
-		set.StringVar(&createConfig.BuildBinUrl, "build-bin-url", "github.com/wyattis/gbuild", "change the location of the build binary")
+		set.StringVar(&createConfig.BuildBinUrl, "build-bin-url", "github.com/wyattis/gbuild@latest", "change the location of the build binary")
 		set.StringVar(&createConfig.BuildBinName, "build-bin-name", "gbuild", "change the name of the binary to execute")
 		return nil
 	},

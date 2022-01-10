@@ -20,8 +20,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.17' # The Go version to download (if necessary) and use.
-      - run: go build github.com/wyattis/gbuild
-      - run: go install github.com/wyattis/gbuild
+      - run: go install github.com/wyattis/gbuild@latest
       - run: gbuild build -clean first-class
 
       
