@@ -25,6 +25,7 @@ type BuildConfig struct {
 	Dry            bool
 	ShowTargets    bool
 	Verbose        bool
+	CGO            bool
 
 	Aliases         StringSlice
 	DistributionSet DistributionSet

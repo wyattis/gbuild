@@ -33,6 +33,7 @@ var buildCommand = lib.Cmd{
 		set.StringVar(&buildConfig.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
 		set.BoolVar(&buildConfig.Clean, "clean", false, "clean the output directory before building")
 		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually doing anything")
+		set.BoolVar(&buildConfig.CGO, "c", false, "enabled cgo by setting CGO_ENABLED=1 for each build")
 		return nil
 	},
 	Parse: func(set *flag.FlagSet, args []string) (err error) {
@@ -75,6 +76,9 @@ func runBuild(set *flag.FlagSet) (err error) {
 		cmd := exec.CommandContext(context.Background(), "go", cmdArgs...)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, []string{fmt.Sprintf("GOOS=%s", dist.GOOS), fmt.Sprintf("GOARCH=%s", dist.GOARCH)}...)
+		if config.CGO {
+			cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
+		}
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		fmt.Printf("building %s\\%s\n", dist.GOOS, dist.GOARCH)
