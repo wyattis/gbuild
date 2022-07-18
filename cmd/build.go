@@ -34,6 +34,8 @@ var buildCommand = lib.Cmd{
 		set.BoolVar(&buildConfig.Clean, "clean", false, "clean the output directory before building")
 		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually doing anything")
 		set.BoolVar(&buildConfig.CGO, "c", false, "enabled cgo by setting CGO_ENABLED=1 for each build")
+		set.StringVar(&buildConfig.LdFlags, "ldflags", "", "pass ldflags to build command")
+		set.BoolVar(&buildConfig.Debug, "debug", false, "include debug symbols in build")
 		return nil
 	},
 	Parse: func(set *flag.FlagSet, args []string) (err error) {
@@ -72,6 +74,13 @@ func runBuild(set *flag.FlagSet) (err error) {
 	for _, dist := range config.DistributionSet {
 		outPath := filepath.Join(config.OutputDir, config.Name)
 		cmdArgs := append(args, "-o", outPath)
+		ldFlags := config.LdFlags
+		if !config.Debug {
+			ldFlags += " -s"
+		}
+		if ldFlags != "" {
+			cmdArgs = append(cmdArgs, "-ldflags", ldFlags)
+		}
 		cmdArgs = append(cmdArgs, config.BuildArgs...)
 		cmd := exec.CommandContext(context.Background(), "go", cmdArgs...)
 		cmd.Env = os.Environ()

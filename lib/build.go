@@ -3,6 +3,7 @@ package lib
 import (
 	"archive/zip"
 	"bufio"
+	"compress/flate"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +27,8 @@ type BuildConfig struct {
 	ShowTargets    bool
 	Verbose        bool
 	CGO            bool
+	LdFlags        string
+	Debug          bool
 
 	Aliases         StringSlice
 	DistributionSet DistributionSet
@@ -69,6 +72,9 @@ func BundleFile(loc string, dist Distribution, config BuildConfig) (err error) {
 	}
 	defer inF.Close()
 	writer := zip.NewWriter(outf)
+	writer.RegisterCompressor(zip.Deflate, func(w io.Writer) (io.WriteCloser, error) {
+		return flate.NewWriter(w, flate.BestCompression)
+	})
 	defer writer.Close()
 	outz, err := writer.Create(name)
 	if err != nil {
