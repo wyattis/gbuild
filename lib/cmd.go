@@ -75,10 +75,14 @@ func Execute() (err error) {
 	for i, cmd := range commands {
 		if cmd.Name == flag.Arg(0) {
 			flagSet := flagSets[i]
+			args := flag.Args()
+			if len(args) > 0 && args[0] == cmd.Name {
+				args = args[1:]
+			}
 			if cmd.Parse == nil {
-				err = flagSet.Parse(flag.Args()[1:])
+				err = flagSet.Parse(args)
 			} else {
-				err = cmd.Parse(flagSet, flag.Args())
+				err = cmd.Parse(flagSet, args)
 			}
 			if err != nil {
 				return

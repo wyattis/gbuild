@@ -25,23 +25,13 @@ var buildCommand = lib.Cmd{
 	Name:             "build",
 	ShortDescription: "Cross compile for multiple platforms using a set of aliases.",
 	LongDescription:  buildDescription,
-	Init: func(set *flag.FlagSet) error {
-		set.BoolVar(&buildConfig.Verbose, "v", false, "verbose output")
-		set.StringVar(&buildConfig.OutputDir, "o", "release", "output directory")
-		set.StringVar(&buildConfig.Name, "name", "", "executable name")
-		set.StringVar(&buildConfig.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
-		set.StringVar(&buildConfig.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
-		set.BoolVar(&buildConfig.Clean, "clean", false, "clean the output directory before building")
-		set.BoolVar(&buildConfig.Generate, "generate", false, "run go generate before building")
-		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually doing anything")
-		set.BoolVar(&buildConfig.CGO, "cgo", false, "enabled cgo by setting CGO_ENABLED=1 for each build")
-		set.StringVar(&buildConfig.LdFlags, "ldflags", "", "pass ldflags to build command")
-		set.BoolVar(&buildConfig.Debug, "debug", false, "include debug symbols in build")
-		return nil
-	},
-	Parse: func(set *flag.FlagSet, args []string) (err error) {
+	Parse: func(_ *flag.FlagSet, args []string) (err error) {
+		set := flag.NewFlagSet("build", flag.ContinueOnError)
+		if err = initBuild(set); err != nil {
+			return
+		}
 		args, buildConfig.BuildArgs, _ = lib.StringSliceCut(args, "--")
-		if err = set.Parse(args[1:]); err != nil {
+		if err = set.Parse(args); err != nil {
 			return
 		}
 		buildConfig.OutputDir = filepath.Clean(buildConfig.OutputDir)
@@ -58,15 +48,42 @@ var buildCommand = lib.Cmd{
 	Exec: runBuild,
 }
 
+func initBuild(set *flag.FlagSet) error {
+	set.BoolVar(&buildConfig.Verbose, "v", false, "verbose output")
+	set.StringVar(&buildConfig.OutputDir, "o", "release", "output directory")
+	set.StringVar(&buildConfig.Name, "name", "", "executable name")
+	set.StringVar(&buildConfig.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
+	set.StringVar(&buildConfig.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
+	set.BoolVar(&buildConfig.Clean, "clean", false, "clean the output directory before building")
+	set.BoolVar(&buildConfig.Generate, "generate", false, "run go generate before building")
+	set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually doing anything")
+	set.BoolVar(&buildConfig.CGO, "cgo", false, "enabled cgo by setting CGO_ENABLED=1 for each build")
+	set.StringVar(&buildConfig.LdFlags, "ldflags", "", "pass ldflags to build command")
+	set.BoolVar(&buildConfig.Debug, "debug", false, "include debug symbols in build")
+	return nil
+}
+
 func runGenerate(config lib.BuildConfig) (err error) {
 	fmt.Println("running go generate")
 	cmd := exec.Command("go", "generate")
 	cmd.Env = os.Environ()
 	cmd.Dir, err = os.Getwd()
+	if config.Verbose {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
 	if err != nil {
 		return
 	}
-	return cmd.Run()
+	if config.Verbose {
+		return cmd.Run()
+	} else {
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			os.Stderr.Write(out)
+		}
+	}
+	return
 }
 
 func runBuild(set *flag.FlagSet) (err error) {

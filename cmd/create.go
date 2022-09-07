@@ -8,11 +8,13 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
-	"github.com/wyattis/gbuild/lib"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/wyattis/gbuild/lib"
+	"github.com/wyattis/z/zslice/zstrings"
 )
 
 //go:embed manual/create.md
@@ -34,39 +36,32 @@ var createCmd = lib.Cmd{
 	Name:             "create",
 	ShortDescription: "generate workflow and bash scripts using the same settings",
 	LongDescription:  createDescription,
-	Init: func(set *flag.FlagSet) error {
-		set.BoolVar(&createConfig.CreateRelease, "release", false, "automatically create a release via the action")
-		set.BoolVar(&createConfig.WorkflowDispatch, "workflow-dispatch", true, "allow dispatching the workflow manually")
-		set.BoolVar(&createConfig.PreRelease, "prerelease", false, "mark the release as a pre-release")
-		set.BoolVar(&createConfig.Draft, "draft", false, "mark the release as a draft")
-		set.StringVar(&createConfig.BuildBinUrl, "build-bin-url", "github.com/wyattis/gbuild@latest", "change the location of the build binary")
-		set.StringVar(&createConfig.BuildBinName, "build-bin-name", "gbuild", "change the name of the binary to execute")
-		return nil
-	},
+	Init:             initCreate,
 	Parse: func(set *flag.FlagSet, args []string) (err error) {
-		args, buildArgs, _ := lib.StringSliceCut(args, "--")
-		args = args[1:]
+		args, buildArgs, _ := zstrings.Cut(args, "--")
+		set = flag.NewFlagSet("create", flag.ContinueOnError)
+		if err = initCreate(set); err != nil {
+			return
+		}
 		if err = set.Parse(args); err != nil {
 			return
 		}
 		buildSet := flag.NewFlagSet("", flag.ExitOnError)
-		if err = buildCommand.Init(buildSet); err != nil {
+		if err = initBuild(buildSet); err != nil {
 			return
 		}
-		if err = buildCommand.Parse(buildSet, buildArgs); err != nil {
+		args = append(set.Args(), "--")
+		if err = buildCommand.Parse(buildSet, append(args, buildArgs...)); err != nil {
 			return
 		}
-		createConfig.Args = buildArgs
 		createConfig.BuildConfig = buildConfig
 		return
 	},
 	Exec: func(set *flag.FlagSet) (err error) {
-		// args := flag.Args()[1:]
 		tmpl := template.New("")
 		tmpl.Funcs(makeFuncMap(tmpl))
 		tmpl, err = tmpl.ParseFS(os.DirFS("templates/github"), "*.tmpl")
 		fmt.Printf("creating Github Actions workflow with %d targets\n", len(createConfig.DistributionSet))
-		// fmt.Println("creating", createConfig, args, tmpl)
 		if err = os.MkdirAll(".github/workflows", os.ModeDir); err != nil {
 			return
 		}
@@ -77,6 +72,16 @@ var createCmd = lib.Cmd{
 		defer f.Close()
 		return tmpl.ExecuteTemplate(f, "actions", createConfig)
 	},
+}
+
+func initCreate(set *flag.FlagSet) error {
+	set.BoolVar(&createConfig.CreateRelease, "release", false, "automatically create a release via the action")
+	set.BoolVar(&createConfig.WorkflowDispatch, "workflow-dispatch", true, "allow dispatching the workflow manually")
+	set.BoolVar(&createConfig.PreRelease, "prerelease", false, "mark the release as a pre-release")
+	set.BoolVar(&createConfig.Draft, "draft", false, "mark the release as a draft")
+	set.StringVar(&createConfig.BuildBinUrl, "build-bin-url", "github.com/wyattis/gbuild@latest", "change the location of the build binary")
+	set.StringVar(&createConfig.BuildBinName, "build-bin-name", "gbuild", "change the name of the binary to execute")
+	return nil
 }
 
 func makeFuncMap(t *template.Template) template.FuncMap {
