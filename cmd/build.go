@@ -32,8 +32,9 @@ var buildCommand = lib.Cmd{
 		set.StringVar(&buildConfig.NameTemplate, "name-template", "{{.NAME}}{{.EXT}}", "template to use for each file")
 		set.StringVar(&buildConfig.BundleTemplate, "bundle-template", "{{.NAME}}_{{.GOOS}}_{{.GOARCH}}{{.ZIP}}", "template to use for each bundle")
 		set.BoolVar(&buildConfig.Clean, "clean", false, "clean the output directory before building")
+		set.BoolVar(&buildConfig.Generate, "generate", false, "run go generate before building")
 		set.BoolVar(&buildConfig.Dry, "dry", false, "run without actually doing anything")
-		set.BoolVar(&buildConfig.CGO, "c", false, "enabled cgo by setting CGO_ENABLED=1 for each build")
+		set.BoolVar(&buildConfig.CGO, "cgo", false, "enabled cgo by setting CGO_ENABLED=1 for each build")
 		set.StringVar(&buildConfig.LdFlags, "ldflags", "", "pass ldflags to build command")
 		set.BoolVar(&buildConfig.Debug, "debug", false, "include debug symbols in build")
 		return nil
@@ -57,6 +58,17 @@ var buildCommand = lib.Cmd{
 	Exec: runBuild,
 }
 
+func runGenerate(config lib.BuildConfig) (err error) {
+	fmt.Println("running go generate")
+	cmd := exec.Command("go", "generate")
+	cmd.Env = os.Environ()
+	cmd.Dir, err = os.Getwd()
+	if err != nil {
+		return
+	}
+	return cmd.Run()
+}
+
 func runBuild(set *flag.FlagSet) (err error) {
 	config := buildConfig
 	if config.Dry {
@@ -66,6 +78,12 @@ func runBuild(set *flag.FlagSet) (err error) {
 
 	if !config.Dry && config.Clean {
 		if err = lib.CleanDirGlob(config.OutputDir, "*.zip"); err != nil {
+			return
+		}
+	}
+
+	if config.Generate {
+		if err = runGenerate(config); err != nil {
 			return
 		}
 	}
@@ -83,8 +101,10 @@ func runBuild(set *flag.FlagSet) (err error) {
 		}
 		cmdArgs = append(cmdArgs, config.BuildArgs...)
 		cmd := exec.CommandContext(context.Background(), "go", cmdArgs...)
-		cmd.Env = os.Environ()
-		cmd.Env = append(cmd.Env, []string{fmt.Sprintf("GOOS=%s", dist.GOOS), fmt.Sprintf("GOARCH=%s", dist.GOARCH)}...)
+		cmd.Env = append(os.Environ(), []string{
+			fmt.Sprintf("GOOS=%s", dist.GOOS),
+			fmt.Sprintf("GOARCH=%s", dist.GOARCH),
+		}...)
 		if config.CGO {
 			cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 		}

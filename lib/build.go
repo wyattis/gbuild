@@ -29,6 +29,7 @@ type BuildConfig struct {
 	CGO            bool
 	LdFlags        string
 	Debug          bool
+	Generate       bool
 
 	Aliases         StringSlice
 	DistributionSet DistributionSet

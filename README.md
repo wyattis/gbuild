@@ -57,7 +57,7 @@ gbuild build -o dist
 ### Passing additional args to build command
 Separate the gbuild arguments from the "go build" arguments using "--"
 ```
-gbuild -- --ldflags '-extldflags "-Wl,--allow-multiple-definition"'
+gbuild build -- --ldflags '-extldflags "-Wl,--allow-multiple-definition"'
 ```
 
 [union]: https://en.wikipedia.org/wiki/Union_(set_theory)
